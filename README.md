@@ -1,2 +1,3 @@
 # pdfcleanse
-meta data removal, FOIA compliant, audit trail, non server based all on your desktop.
+
+Browser-based PDF metadata removal. No server upload. GDPR, HIPAA and FOIA compliant. Audit certificate included.
