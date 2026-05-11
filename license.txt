@@ -1,0 +1,134 @@
+
+PDF CLEANSE — LICENCE AGREEMENT
+================================
+Version 1.0 | May 2025 | pdfcleanse.com
+
+COPYRIGHT
+---------
+© 2025 PDF Cleanse. All rights reserved.
+
+PDF Cleanse and the PDF Cleanse logo are trademarks of PDF Cleanse
+(trademark registration pending).
+
+The PDF Cleanse software, including the four-stage metadata removal
+architecture, audit certificate format, whitepaper, and all associated
+documentation are the intellectual property of PDF Cleanse.
+
+PERMITTED USES
+--------------
+Individual Licence (£50 one-time):
+  - Use by one named individual on any device they personally use
+  - No sharing, redistribution or deployment to other users
+
+Team Licence (£397 one-time):
+  - Use by up to 10 named users within one organisation
+  - Deployment to a shared drive accessible only to licensed users
+
+Departmental Licence (£2,400/year):
+  - Unlimited users within one department of one organisation
+  - Intranet or air-gapped deployment within that department
+  - Annual renewal required
+
+Organisation Licence (£8,500/year):
+  - Unlimited users within one organisation
+  - Intranet or air-gapped deployment across the organisation
+  - Annual renewal required
+
+Enterprise Licence (£50,000/year):
+  - Unlimited users within one organisation
+  - Includes contractual no-server guarantee
+  - Bespoke deployment terms agreed separately
+  - Annual renewal required
+
+NOT PERMITTED UNDER ANY LICENCE
+--------------------------------
+  - Resale or redistribution to third parties
+  - White-labelling or rebranding without written agreement
+  - Modification and redistribution of modified versions
+  - Use outside the scope of the purchased licence tier
+  - Claiming ownership or authorship of the software
+
+DISCLAIMER
+----------
+PDF Cleanse is a technical utility and does not constitute legal
+advice. Users remain solely responsible for their compliance
+obligations under GDPR, HIPAA, CCPA, FOIA, SRA rules, or any
+other applicable law or regulation.
+
+The software is provided as-is without warranty of any kind.
+PDF Cleanse accepts no liability for any loss, breach, or legal
+consequence arising from use of this tool.
+
+Always verify cleaned files in Adobe Acrobat → File → Properties
+before sharing sensitive documents.
+
+CONTACT
+-------
+Licencing enquiries: info@pdfcleanse.com
+Purchase orders:     info@pdfcleanse.com
+Enterprise:          info@pdfcleanse.com
+
+© 2025 PDF Cleanse · pdfcleanse.com
+PDF Cleanse and the PDF Cleanse logo are trademarks of PDF Cleanse
+(trademark registration pending).
+
+The PDF Cleanse software, including the four-stage metadata removal
+architecture, audit certificate format, whitepaper, and all associated
+documentation are the intellectual property of PDF Cleanse.
+
+PERMITTED USES
+--------------
+Individual Licence (£50 one-time):
+  - Use by one named individual on any device they personally use
+  - No sharing, redistribution or deployment to other users
+
+Team Licence (£397 one-time):
+  - Use by up to 10 named users within one organisation
+  - Deployment to a shared drive accessible only to licensed users
+
+Departmental Licence (£2,400/year):
+  - Unlimited users within one department of one organisation
+  - Intranet or air-gapped deployment within that department
+  - Annual renewal required
+
+Organisation Licence (£8,500/year):
+  - Unlimited users within one organisation
+  - Intranet or air-gapped deployment across the organisation
+  - Annual renewal required
+
+Enterprise Licence (£50,000/year):
+  - Unlimited users within one organisation
+  - Includes contractual no-server guarantee
+  - Bespoke deployment terms agreed separately
+  - Annual renewal required
+
+NOT PERMITTED UNDER ANY LICENCE
+--------------------------------
+  - Resale or redistribution to third parties
+  - White-labelling or rebranding without written agreement
+  - Modification and redistribution of modified versions
+  - Use outside the scope of the purchased licence tier
+  - Claiming ownership or authorship of the software
+
+DISCLAIMER
+----------
+PDF Cleanse is a technical utility and does not constitute legal
+advice. Users remain solely responsible for their compliance
+obligations under GDPR, HIPAA, CCPA, FOIA, SRA rules, or any
+other applicable law or regulation.
+
+The software is provided as-is without warranty of any kind.
+PDF Cleanse accepts no liability for any loss, breach, or legal
+consequence arising from use of this tool.
+
+Always verify cleaned files in Adobe Acrobat → File → Properties
+before sharing sensitive documents.
+
+CONTACT
+-------
+Licencing enquiries: info@pdfcleanse.com
+Purchase orders:     info@pdfcleanse.com
+Enterprise:          info@pdfcleanse.com
+
+© 2025 PDF Cleanse · pdfcleanse.com
+
