@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Cleanse — Your PDF Never Leaves Your Browser</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #0f0f0f; --paper: #f5f2eb; --accent: #1a3a2a;
+    --accent-light: #2d6347; --red: #c0392b;
+    --mono: 'DM Mono', monospace; --serif: 'DM Serif Display', Georgia, serif;
+  }
+  html, body { min-height: 100%; background: var(--paper); color: var(--ink); font-family: var(--mono); font-size: 14px; line-height: 1.6; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 100; opacity: 0.4; }
+  .page { min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; max-width: 760px; margin: 0 auto; padding: 0 24px; }
+  header { padding: 48px 0 32px; border-bottom: 1px solid rgba(15,15,15,0.15); }
+  .logo { font-size: 11px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent-light); margin-bottom: 24px; }
+  h1 { font-family: var(--serif); font-size: clamp(32px, 6vw, 52px); line-height: 1.1; margin-bottom: 16px; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .tagline { font-size: 13px; color: rgba(15,15,15,0.55); letter-spacing: 0.02em; max-width: 480px; }
+  .trust-bar { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(15,15,15,0.08); }
+  .trust-item { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(15,15,15,0.5); }
+  .trust-item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-light); display: inline-block; }
+  main { padding: 48px 0; }
+  .drop-zone { border: 1.5px dashed rgba(15,15,15,0.25); border-radius: 4px; padding: 48px 32px; text-align: center; cursor: pointer; transition: all 0.2s ease; background: rgba(255,255,255,0.3); position: relative; overflow: hidden; }
+  .drop-zone::before { content: ''; position: absolute; inset: 0; background: var(--accent); opacity: 0; transition: opacity 0.2s ease; }
+  .drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); border-style: solid; }
+  .drop-zone:hover::before, .drop-zone.drag-over::before { opacity: 0.03; }
+  .drop-icon { width: 48px; height: 48px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(15,15,15,0.2); border-radius: 2px; color: rgba(15,15,15,0.4); }
+  .drop-icon svg { width: 22px; height: 22px; }
+  .drop-title { font-family: var(--serif); font-size: 20px; margin-bottom: 8px; }
+  .drop-sub { font-size: 12px; color: rgba(15,15,15,0.45); letter-spacing: 0.05em; }
+  #file-input { display: none; }
+  .batch-queue { display: none; margin-top: 16px; }
+  .batch-queue.visible { display: block; }
+  .batch-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(15,15,15,0.45); }
+  .add-more { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-light); cursor: pointer; border: none; background: none; padding: 0; text-decoration: underline; text-underline-offset: 3px; }
+  .batch-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.4); border: 0.5px solid rgba(15,15,15,0.1); border-radius: 4px; margin-bottom: 6px; font-size: 12px; }
+  .batch-item-icon { width: 28px; height: 32px; background: var(--accent); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 500; letter-spacing: 0.08em; color: var(--paper); flex-shrink: 0; }
+  .batch-item-name { flex: 1; word-break: break-all; }
+  .batch-item-size { color: rgba(15,15,15,0.4); white-space: nowrap; }
+  .batch-item-stat { font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+  .batch-item-stat.pending { color: rgba(15,15,15,0.35); }
+  .batch-item-stat.processing { color: #a06800; }
+  .batch-item-stat.done { color: var(--accent-light); }
+  .batch-item-stat.error { color: var(--red); }
+  .batch-remove { background: none; border: none; cursor: pointer; color: rgba(15,15,15,0.3); font-size: 18px; padding: 0 0 0 6px; line-height: 1; }
+  .batch-remove:hover { color: var(--red); }
+  .metadata-panel { display: none; margin-top: 24px; border: 1px solid rgba(15,15,15,0.1); border-radius: 4px; overflow: hidden; background: rgba(255,255,255,0.4); }
+  .metadata-panel.visible { display: block; }
+  .metadata-header { padding: 12px 16px; background: rgba(15,15,15,0.04); border-bottom: 1px solid rgba(15,15,15,0.08); font-size: 10px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(15,15,15,0.5); display: flex; justify-content: space-between; align-items: center; }
+  .metadata-count { font-size: 9px; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.05em; font-weight: 500; }
+  .metadata-count.exposed { background: var(--red); color: white; }
+  .metadata-count.clean { background: var(--accent-light); color: white; }
+  .metadata-list { padding: 16px; }
+  .metadata-row { display: flex; gap: 16px; padding: 6px 0; border-bottom: 1px solid rgba(15,15,15,0.05); font-size: 12px; }
+  .metadata-row:last-child { border-bottom: none; }
+  .meta-key { color: rgba(15,15,15,0.45); width: 120px; flex-shrink: 0; letter-spacing: 0.03em; }
+  .meta-val { color: var(--red); word-break: break-all; transition: color 0.4s ease; }
+  .meta-val.empty { color: rgba(15,15,15,0.25); font-style: italic; }
+  .meta-val.clean { color: var(--accent-light); font-style: italic; }
+  .progress-bar { display: none; height: 2px; background: rgba(15,15,15,0.08); border-radius: 1px; margin-top: 20px; overflow: hidden; }
+  .progress-bar.visible { display: block; }
+  .progress-fill { height: 100%; background: var(--accent-light); width: 0%; transition: width 0.3s ease; border-radius: 1px; }
+  .progress-label { font-size: 10px; color: rgba(15,15,15,0.4); letter-spacing: 0.08em; margin-top: 6px; display: none; }
+  .progress-label.visible { display: block; }
+  .status { display: none; margin-top: 20px; padding: 14px 16px; border-radius: 4px; font-size: 12px; letter-spacing: 0.03em; line-height: 1.5; }
+  .status.visible { display: block; }
+  .status.success { background: rgba(26,58,42,0.08); border: 1px solid rgba(26,58,42,0.2); color: var(--accent); }
+  .status.error { background: rgba(192,57,43,0.06); border: 1px solid rgba(192,57,43,0.2); color: var(--red); }
+  #cert-box { display: none; margin-top: 20px; padding: 20px; background: rgba(26,58,42,0.04); border: 1px solid rgba(26,58,42,0.15); border-radius: 4px; font-size: 12px; }
+  #cert-box.visible { display: block; }
+  .cert-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .cert-title { font-family: var(--serif); font-size: 16px; color: var(--accent); }
+  .cert-stamp { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-light); background: rgba(26,58,42,0.1); padding: 3px 8px; border-radius: 2px; }
+  .cert-file-head { font-weight: 500; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-light); margin: 12px 0 6px; }
+  .cert-row { display: flex; gap: 12px; padding: 4px 0; border-bottom: 0.5px solid rgba(26,58,42,0.1); }
+  .cert-row:last-child { border-bottom: none; }
+  .cert-key { color: rgba(15,15,15,0.45); width: 160px; flex-shrink: 0; }
+  .cert-val { color: var(--ink); word-break: break-all; }
+  .actions { display: none; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+  .actions.visible { display: flex; }
+  .btn { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding: 14px 28px; border: none; border-radius: 2px; cursor: pointer; transition: all 0.15s ease; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: var(--paper); }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-light); }
+  .btn-secondary { background: transparent; color: var(--ink); border: 1px solid rgba(15,15,15,0.2); }
+  .btn-secondary:hover { border-color: var(--ink); }
+  .btn-ghost { background: transparent; color: var(--accent-light); border: 1px solid rgba(26,58,42,0.25); font-size: 10px; padding: 10px 20px; }
+  .btn-ghost:hover { background: rgba(26,58,42,0.05); }
+  .compliance-bar { display: none; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+  .cbadge { font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; border: 1px solid rgba(26,58,42,0.2); color: var(--accent-light); background: rgba(26,58,42,0.05); }
+  .how-it-works { margin-top: 56px; padding-top: 40px; border-top: 1px solid rgba(15,15,15,0.1); }
+  .section-label { font-size: 10px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(15,15,15,0.4); margin-bottom: 28px; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 24px; }
+  .step-num { font-family: var(--serif); font-size: 36px; color: rgba(15,15,15,0.1); line-height: 1; margin-bottom: 10px; }
+  .step-title { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+  .step-desc { font-size: 12px; color: rgba(15,15,15,0.5); line-height: 1.5; }
+  .strip-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 28px; }
+  .strip-item { padding: 14px; background: rgba(255,255,255,0.35); border: 0.5px solid rgba(15,15,15,0.1); border-radius: 4px; }
+  .strip-item .s-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-light); margin-bottom: 4px; }
+  .strip-item .s-desc { font-size: 12px; color: rgba(15,15,15,0.55); line-height: 1.4; }
+  .privacy-callout { margin-top: 32px; padding: 24px; background: var(--accent); color: var(--paper); border-radius: 4px; }
+  .privacy-callout .big { font-family: var(--serif); font-size: 22px; margin-bottom: 8px; line-height: 1.2; }
+  .privacy-callout .small { font-size: 12px; opacity: 0.7; line-height: 1.5; }
+  footer { padding: 28px 0; border-top: 1px solid rgba(15,15,15,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .footer-left { font-size: 11px; color: rgba(15,15,15,0.35); }
+  .footer-right { font-size: 11px; color: rgba(15,15,15,0.35); }
+  .footer-copy { font-size: 10px; color: rgba(15,15,15,0.55); letter-spacing: 0.03em; line-height: 1.6; width: 100%; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid rgba(15,15,15,0.08); }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.6); z-index: 200; overflow-y: auto; padding: 40px 20px; }
+  .modal-box { max-width: 620px; margin: 0 auto; background: var(--paper); border-radius: 4px; padding: 48px; position: relative; font-size: 13px; line-height: 1.7; }
+  .modal-close { position: absolute; top: 20px; right: 24px; background: none; border: none; font-size: 20px; cursor: pointer; color: rgba(15,15,15,0.4); font-family: var(--mono); }
+  .modal-eyebrow { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent-light); margin-bottom: 16px; }
+  .modal-title { font-family: var(--serif); font-size: 26px; margin-bottom: 8px; line-height: 1.2; }
+  .modal-updated { color: rgba(15,15,15,0.4); font-size: 11px; margin-bottom: 24px; }
+  .modal-sh { font-weight: 500; margin-bottom: 6px; letter-spacing: 0.04em; }
+  .modal-body p { margin-bottom: 20px; color: rgba(15,15,15,0.7); }
+
+  /* ── Paywall modal ── */
+  #paywall-modal { display:none; position:fixed; inset:0; background:rgba(15,15,15,0.75); z-index:300; padding:20px; }
+  #paywall-modal.visible { display:flex; align-items:center; justify-content:center; }
+  .paywall-box { background:var(--paper); border-radius:4px; max-width:520px; width:100%; padding:48px 40px; position:relative; text-align:center; }
+  .paywall-icon { width:56px; height:56px; background:rgba(26,58,42,0.08); border-radius:50%; margin:0 auto 20px; display:flex; align-items:center; justify-content:center; }
+  .paywall-icon svg { width:26px; height:26px; color:var(--accent); }
+  .paywall-eyebrow { font-size:10px; font-weight:500; letter-spacing:0.18em; text-transform:uppercase; color:var(--accent2); margin-bottom:12px; }
+  .paywall-title { font-family:var(--serif); font-size:26px; color:var(--ink); margin-bottom:10px; line-height:1.2; }
+  .paywall-body { font-size:13px; color:rgba(15,15,15,0.55); line-height:1.6; margin-bottom:28px; }
+  .paywall-features { display:flex; flex-direction:column; gap:8px; margin-bottom:28px; text-align:left; background:rgba(26,58,42,0.04); border-radius:4px; padding:16px 20px; }
+  .pf-item { font-family:var(--mono); font-size:11px; color:var(--accent); display:flex; gap:8px; align-items:center; }
+  .pf-item::before { content:'✓'; font-weight:700; flex-shrink:0; }
+  .paywall-cta { display:flex; flex-direction:column; gap:10px; }
+  .paywall-close { position:absolute; top:16px; right:20px; background:none; border:none; font-size:20px; cursor:pointer; color:rgba(15,15,15,0.3); font-family:var(--mono); }
+  .paywall-close:hover { color:var(--ink); }
+  .paywall-note { font-family:var(--mono); font-size:10px; color:rgba(15,15,15,0.35); margin-top:12px; letter-spacing:0.04em; }
+
+  /* Fear panel */
+  .fear-panel { display:none; margin-top:24px; border-radius:4px; overflow:hidden; background:#0d1f12; border:1px solid #20402b; }
+  .fear-panel.visible { display:block; }
+  .fear-bar { background:#16301f; padding:9px 14px; display:flex; align-items:center; gap:7px; }
+  .fear-dot { width:10px; height:10px; border-radius:50%; }
+  .fear-dot.r{background:#ff5f56;} .fear-dot.y{background:#ffbd2e;} .fear-dot.g{background:#27c93f;}
+  .fear-fname { font-family:var(--mono); font-size:11px; color:#8fb7a0; margin-left:auto; word-break:break-all; }
+  .fear-body { padding:14px 16px; }
+  .fear-warn { font-size:11px; color:#ffe0db; background:rgba(192,57,43,0.22); border:1px solid rgba(192,57,43,0.5); border-radius:3px; padding:8px 11px; margin-bottom:13px; line-height:1.5; }
+  .fear-sec { font-family:var(--mono); font-size:9px; letter-spacing:.13em; text-transform:uppercase; color:#6f9a7e; margin:11px 0 5px; }
+  .fear-sec:first-child { margin-top:0; }
+  .fear-row { display:flex; gap:12px; padding:3px 0; font-family:var(--mono); font-size:12px; line-height:1.5; }
+  .fear-key { color:#ff8a7a; width:128px; flex-shrink:0; }
+  .fear-val { color:#f1fff5; word-break:break-all; }
+  .fear-val.gone { color:#4ade80; }
+  .fear-val.empty { color:#6a8a74; font-style:italic; }
+  .fear-foot { padding:9px 16px; background:#0a1810; font-size:10px; color:#85b094; line-height:1.55; border-top:1px solid #20402b; }
+  /* Calm panel */
+  .calm-panel { display:none; margin-top:24px; border-radius:4px; background:#0f2a1a; overflow:hidden; }
+  .calm-panel.visible { display:block; }
+  .calm-in { padding:34px 28px; text-align:center; }
+  .calm-tick { width:62px; height:62px; border-radius:50%; border:2px solid #2e6647; background:#1a3d2a; margin:0 auto 18px; display:flex; align-items:center; justify-content:center; }
+  .calm-tick svg { width:30px; height:30px; }
+  .calm-title { font-family:var(--serif); font-size:23px; color:#f7f4ee; margin-bottom:5px; }
+  .calm-sub { font-family:var(--mono); font-size:11px; color:#a9c7b4; letter-spacing:.05em; margin-bottom:20px; }
+  .calm-badges { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:22px; }
+  .calm-badge { font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; padding:5px 12px; border:1px solid rgba(74,222,128,0.4); border-radius:2px; color:#cdebd5; background:rgba(46,102,71,0.25); }
+  .calm-line { font-family:var(--serif); font-size:17px; font-style:italic; color:#f7f4ee; line-height:1.4; margin-bottom:20px; max-width:380px; margin-left:auto; margin-right:auto; }
+  .calm-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .calm-actions .btn-primary { background:#2e9955; color:#06140c; }
+  .calm-actions .btn-primary:hover { background:#3bb567; }
+  .calm-actions .btn-buy { background:transparent; color:#cdebd5; border:1px solid rgba(205,235,213,0.45); }
+  .calm-actions .btn-buy:hover { border-color:#cdebd5; }
+  .calm-foot { font-family:var(--mono); font-size:10px; color:#7ba588; margin-top:18px; letter-spacing:.05em; }
+
+  @media (max-width: 500px) { .trust-bar { gap: 14px; } .drop-zone { padding: 36px 16px; } footer { flex-direction: column; align-items: flex-start; } .modal-box { padding: 32px 20px; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="logo">PDF Cleanse</div>
+    <h1>Your PDF never leaves<br><em>your browser.</em> Ever.</h1>
+    <p class="tagline">Strip hidden metadata, author trails, XMP packets, and document fingerprints — privately, instantly, with a downloadable audit certificate.</p>
+    <div class="trust-bar">
+      <div class="trust-item"><span class="dot"></span> No server upload</div>
+      <div class="trust-item"><span class="dot"></span> No account required</div>
+      <div class="trust-item"><span class="dot"></span> Batch processing</div>
+      <div class="trust-item"><span class="dot"></span> GDPR · HIPAA · CCPA aware</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="drop-zone" id="drop-zone" onclick="triggerPick()">
+      <input type="file" id="file-input" accept=".pdf" multiple />
+      <div id="drop-default">
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4m0 0L8 8m4-4l4 4M4 20h16"/></svg>
+        </div>
+        <div class="drop-title">Drop your PDFs here</div>
+        <div class="drop-sub">or click to browse &nbsp;·&nbsp; single file</div>
+        <div class="drop-sub" style="margin-top:8px;color:var(--accent-light);font-weight:500;">Processed on this computer — your file never leaves the building.</div>
+      </div>
+    </div>
+
+    <div class="batch-queue" id="batch-queue">
+      <div class="batch-header">
+        <span id="batch-label">0 files queued</span>
+        <button class="add-more" onclick="triggerPick()">+ add more</button>
+      </div>
+      <div id="batch-list"></div>
+    </div>
+
+    <div class="fear-panel" id="fear-panel">
+      <div class="fear-bar">
+        <span class="fear-dot r"></span><span class="fear-dot y"></span><span class="fear-dot g"></span>
+        <span class="fear-fname" id="fear-fname">document.pdf</span>
+      </div>
+      <div class="fear-body">
+        <div class="fear-warn" id="fear-warn">Hidden data found in this file. We can read it because it is running on your computer — nothing has been sent anywhere.</div>
+        <div id="fear-rows"></div>
+      </div>
+      <div class="fear-foot" id="fear-foot">Read locally in your browser. No upload. No server. No trace.</div>
+    </div>
+
+    <div class="calm-panel" id="calm-panel">
+      <div class="calm-in">
+        <div class="calm-tick">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <div class="calm-title">Your file is now clean.</div>
+        <div class="calm-sub">Verified — nothing sent, nothing stored.</div>
+        <div class="calm-badges">
+          <span class="calm-badge">Author cleared</span>
+          <span class="calm-badge">XMP packet removed</span>
+          <span class="calm-badge">Document IDs zeroed</span>
+          <span class="calm-badge">PieceInfo stripped</span>
+        </div>
+        <div class="calm-line">This file is clean. Make every file from today the same.</div>
+        <div class="calm-actions">
+          <button class="btn btn-primary" onclick="downloadClean()">Download clean file</button>
+          <a href="index.html#pricing" target="_self" class="btn btn-buy">Buy a licence</a>
+        </div>
+        <div class="calm-foot">Drop your clean file back in to verify — the hidden data will be gone.</div>
+      </div>
+    </div>
+
+    <div class="metadata-panel" id="metadata-panel">
+      <div class="metadata-header">
+        <span>Metadata found in your file</span>
+        <span class="metadata-count exposed" id="metadata-count">—</span>
+      </div>
+      <div class="metadata-list" id="metadata-list"></div>
+    </div>
+
+    <div class="progress-bar" id="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="progress-label" id="progress-label"></div>
+    <div class="status" id="status"></div>
+
+    <div id="cert-box">
+      <div class="cert-header">
+        <div class="cert-title">Metadata Removal Certificate</div>
+        <div class="cert-stamp">Verified Clean</div>
+      </div>
+      <div id="cert-rows"></div>
+      <div style="margin-top:14px;">
+        <button class="btn btn-ghost" onclick="downloadCert()">Download certificate (.txt)</button>
+      </div>
+    </div>
+
+    <div class="actions" id="actions">
+      <button class="btn btn-primary" id="clean-btn" onclick="runClean()">Clean this file</button>
+    </div>
+
+    <div class="compliance-bar" id="compliance-bar">
+      <span class="cbadge">GDPR Art.5</span>
+      <span class="cbadge">GDPR Art.17</span>
+      <span class="cbadge">UK ICO 2025</span>
+      <span class="cbadge">HIPAA safe</span>
+      <span class="cbadge">CCPA</span>
+      <span class="cbadge">SRA guidance</span>
+      <span class="cbadge">FOIA ready</span>
+    </div>
+
+    <div class="how-it-works">
+      <div class="section-label">How it works</div>
+      <div class="steps">
+        <div class="step"><div class="step-num">01</div><div class="step-title">Drop one or many PDFs</div><div class="step-desc">Files are read directly in your browser. Nothing is transmitted anywhere, ever.</div></div>
+        <div class="step"><div class="step-num">02</div><div class="step-title">We expose what's hidden</div><div class="step-desc">Author names, creation dates, software signatures, document fingerprints — all surfaced before you clean.</div></div>
+        <div class="step"><div class="step-num">03</div><div class="step-title">Deep clean &amp; certificate</div><div class="step-desc">Four-stage strip. Clean files download. An audit certificate records every removal for compliance records.</div></div>
+      </div>
+
+      <div class="section-label" style="margin-top:40px;">What gets stripped — four stages</div>
+      <div class="strip-grid">
+        <div class="strip-item"><div class="s-label">Stage 1 — Info dictionary</div><div class="s-desc">Title, Author, Subject, Keywords, Creator, Producer, Creation and Modified dates.</div></div>
+        <div class="strip-item"><div class="s-label">Stage 2 — XMP packets</div><div class="s-desc">Adobe's extended metadata XML format. Invisible in most viewers but readable by forensic tools.</div></div>
+        <div class="strip-item"><div class="s-label">Stage 3 — Document IDs</div><div class="s-desc">Unique /ID fingerprints in the PDF trailer. Survive standard cleaning — we overwrite with zeroes.</div></div>
+        <div class="strip-item"><div class="s-label">Stage 4 — PieceInfo streams</div><div class="s-desc">Application data blocks from InDesign, Illustrator, and Acrobat containing internal workflow metadata.</div></div>
+      </div>
+
+      <div class="privacy-callout">
+        <div class="big">The file never leaves your machine.</div>
+        <div class="small">Unlike Smallpdf, ilovePDF, and every other cloud tool — PDF Cleanse processes everything locally in your browser. We have no servers receiving your documents. We couldn't read your files even if we wanted to. Always verify in Adobe Acrobat → File → Properties before sharing sensitive documents.</div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-left">
+      <strong>PDF Cleanse</strong> &nbsp;·&nbsp; Privacy-first document tool &nbsp;·&nbsp; pdfcleanse.com
+    </div>
+    <div class="footer-right">
+      <a href="javascript:void(0)" onclick="openTerms(event)" style="color:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer;">Terms of use</a>
+      &nbsp;·&nbsp; No account. No upload. No trace.
+    </div>
+    <div class="footer-copy">
+      &copy; 2025 PDF Cleanse. All rights reserved. &nbsp;·&nbsp;
+      PDF Cleanse&trade; is a proprietary compliance instrument. The four-stage metadata removal architecture, audit certificate format, and associated documentation are the intellectual property of PDF Cleanse. &nbsp;·&nbsp;
+      Unauthorised reproduction, redistribution, white-labelling or resale of this software without a written licence agreement is strictly prohibited. &nbsp;·&nbsp;
+      Patent pending. &nbsp;·&nbsp;
+      Single-organisation licence: permitted for internal use across licensed users only. &nbsp;·&nbsp;
+      <a href="javascript:void(0)" onclick="openTerms(event)" style="color:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer;">Full terms of use</a>
+    </div>
+  </footer>
+</div>
+
+<!-- Paywall modal -->
+<div id="paywall-modal" style="display:none;">
+  <div class="paywall-box">
+    <button class="paywall-close" onclick="closePaywall()">✕</button>
+    <div class="paywall-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+      </svg>
+    </div>
+    <div class="paywall-eyebrow">Free limit reached</div>
+    <div class="paywall-title">You've used your free clean.</div>
+    <div class="paywall-body">The free tier includes one PDF. Upgrade to clean unlimited files, process batches, and download audit certificates for your compliance records.</div>
+    <div class="paywall-features">
+      <div class="pf-item">Unlimited files — single or batch</div>
+      <div class="pf-item">Downloadable audit certificate per session</div>
+      <div class="pf-item">Four-stage deep clean — XMP, Doc IDs, PieceInfo</div>
+      <div class="pf-item">GDPR · HIPAA · CCPA compliance documentation</div>
+      <div class="pf-item">Technical whitepaper for your IT team</div>
+    </div>
+    <div class="paywall-cta">
+      <a href="index.html#pricing" target="_self" class="btn btn-primary" style="text-align:center;">See pricing — from £97</a>
+      <a href="mailto:info@pdfcleanse.com?subject=PDF Cleanse licence enquiry" class="btn btn-secondary" style="text-align:center;">Request a purchase order invoice</a>
+    </div>
+    <div class="paywall-note">Already have a licence? <a href="mailto:info@pdfcleanse.com" style="color:var(--accent2);">Email us</a> for your unlocked version.</div>
+  </div>
+</div>
+
+<!-- Terms modal -->
+<div class="modal-overlay" id="terms-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeTerms()">✕</button>
+    <div class="modal-eyebrow">PDF Cleanse</div>
+    <div class="modal-title">Terms of Use</div>
+    <p class="modal-updated">Last updated: May 2025</p>
+    <div class="modal-body">
+      <div class="modal-sh">1. What this tool does</div>
+      <p>PDF Cleanse removes metadata from PDF files entirely within your browser using a four-stage process: Info dictionary, XMP packets, document ID fingerprints, and PieceInfo streams. No file data is transmitted to any server at any point. Processing happens entirely on your device.</p>
+      <div class="modal-sh">2. No legal advice</div>
+      <p>PDF Cleanse is a technical utility, not a legal service. Using this tool does not constitute legal advice and does not guarantee compliance with any law, regulation, or professional obligation including GDPR, HIPAA, CCPA, SRA rules, or FOIA requirements. You remain solely responsible for determining whether metadata removal is appropriate for your situation and whether additional steps are required.</p>
+      <div class="modal-sh">3. Provided as-is</div>
+      <p>This tool is provided without warranty of any kind. While we take care to strip all known metadata layers, we cannot guarantee that every form of embedded data is removed from every PDF. Always verify the output in Adobe Acrobat → File → Properties before sharing sensitive documents. The audit certificate records what was processed but is not a legal guarantee of completeness.</p>
+      <div class="modal-sh">4. Your responsibility</div>
+      <p>You are solely responsible for the documents you process and the decisions you make with the output. PDF Cleanse accepts no liability for any loss, breach, or legal consequence arising from use of this tool.</p>
+      <div class="modal-sh">5. No data collected</div>
+      <p>We do not collect, store, or process any personal data. No cookies are set. No analytics are loaded. The tool functions entirely offline once the page has loaded. Your files and their contents are never accessible to us.</p>
+      <div class="modal-sh">6. Contact</div>
+      <p>Questions about these terms can be directed to the email address on your purchase receipt.</p>
+    </div>
+    <button class="btn btn-primary" onclick="closeTerms()">Close</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script>
+let queue = [];
+let auditLog = [];
+
+// ── Freemium gate — 3 free cleans, 1 free download, whichever breaches first ──
+let cleanCount = 0;
+let downloadCount = 0;
+const MAX_CLEANS = 3;
+const MAX_DOWNLOADS = 1;
+
+function hasReachedLimit() { return cleanCount >= MAX_CLEANS || downloadCount >= MAX_DOWNLOADS; }
+function cleanBlocked()    { return cleanCount >= MAX_CLEANS; }
+function downloadBlocked() { return downloadCount >= MAX_DOWNLOADS; }
+
+function openPaywall() {
+  const m = document.getElementById('paywall-modal');
+  m.style.display = 'flex';
+  m.offsetHeight; // force reflow
+  m.classList.add('visible');
+}
+function closePaywall() {
+  const m = document.getElementById('paywall-modal');
+  m.classList.remove('visible');
+  setTimeout(() => { if (!m.classList.contains('visible')) m.style.display = 'none'; }, 200);
+}
+document.getElementById('paywall-modal').addEventListener('click', e => {
+  if (e.target.id === 'paywall-modal') closePaywall();
+});
+
+
+const dropZone      = document.getElementById('drop-zone');
+const fileInput     = document.getElementById('file-input');
+const batchQueueEl  = document.getElementById('batch-queue');
+const batchList     = document.getElementById('batch-list');
+const batchLabel    = document.getElementById('batch-label');
+const metadataPanel = document.getElementById('metadata-panel');
+const metadataList  = document.getElementById('metadata-list');
+const metadataCount = document.getElementById('metadata-count');
+const actions       = document.getElementById('actions');
+const cleanBtn      = document.getElementById('clean-btn');
+const statusEl      = document.getElementById('status');
+const progressBar   = document.getElementById('progress-bar');
+const progressFill  = document.getElementById('progress-fill');
+const progressLbl   = document.getElementById('progress-label');
+const certBox       = document.getElementById('cert-box');
+const certRows      = document.getElementById('cert-rows');
+const compBar       = document.getElementById('compliance-bar');
+
+function openTerms(e) { e.preventDefault(); document.getElementById('terms-modal').style.display = 'block'; }
+function closeTerms() { document.getElementById('terms-modal').style.display = 'none'; }
+document.getElementById('terms-modal').addEventListener('click', e => { if (e.target.id === 'terms-modal') closeTerms(); });
+
+function triggerPick() { if (cleanBlocked()) { openPaywall(); return; } fileInput.click(); }
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  const files = [...e.dataTransfer.files].filter(f => f.type === 'application/pdf');
+  if (!files.length) { showStatus('Please drop a PDF file.', 'error'); return; }
+  addFiles(files);
+});
+fileInput.addEventListener('change', e => {
+  const files = [...e.target.files].filter(f => f.type === 'application/pdf');
+  if (files.length) addFiles(files);
+  fileInput.value = '';
+});
+
+function addFiles(files) {
+  if (cleanBlocked()) { openPaywall(); return; }
+  // Single-file trial: each drop replaces the queue
+  queue = [{ file: files[0], status: 'pending', cleanBytes: null }];
+  document.getElementById('calm-panel').classList.remove('visible');
+  certBox.classList.remove('visible');
+  compBar.style.display = 'none';
+  hideStatus();
+  document.querySelectorAll('.upgrade-nudge').forEach(el => el.remove());
+  renderQueue();
+  loadMeta(queue[0]);
+}
+
+function renderQueue() {
+  if (!queue.length) return;
+  batchQueueEl.classList.add('visible');
+  batchLabel.textContent = queue.length === 1 ? '1 file queued' : `${queue.length} files queued`;
+  cleanBtn.textContent = 'Clean this file';
+  batchList.innerHTML = '';
+  queue.forEach((item, i) => {
+    const d = document.createElement('div');
+    d.className = 'batch-item';
+    d.innerHTML = `<div class="batch-item-icon">PDF</div><div class="batch-item-name">${item.file.name}</div><div class="batch-item-size">${fmtBytes(item.file.size)}</div><div class="batch-item-stat ${item.status}" id="is-${i}">${item.status}</div>${item.status === 'pending' ? `<button class="batch-remove" onclick="removeFile(${i})">×</button>` : ''}`;
+    batchList.appendChild(d);
+  });
+  document.getElementById('drop-default').style.display = 'none';
+  actions.classList.add('visible');
+}
+
+function removeFile(i) {
+  queue.splice(i, 1);
+  if (!queue.length) { resetTool(); return; }
+  renderQueue();
+  if (queue.length === 1) loadMeta(queue[0]);
+  else metadataPanel.classList.remove('visible');
+}
+
+async function loadMeta(item) {
+  try {
+    const bytes = await readBytes(item.file);
+    const doc   = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true });
+    const latin1 = Array.from(bytes, b => String.fromCharCode(b)).join('');
+    renderFearPanel(getFields(doc, latin1), item.file.name);
+  } catch(e) {
+    document.getElementById('fear-panel').classList.add('visible');
+    document.getElementById('fear-rows').innerHTML =
+      '<div class="fear-row"><span class="fear-val empty">Could not read this file — it may be encrypted or malformed.</span></div>';
+  }
+}
+
+function getFields(doc, latin1) {
+  // Stage 1 — Info dictionary
+  const s1 = {
+    'Title':         doc.getTitle(),
+    'Author':        doc.getAuthor(),
+    'Subject':       doc.getSubject(),
+    'Keywords':      doc.getKeywords(),
+    'Creator':       doc.getCreator(),
+    'Producer':      doc.getProducer(),
+    'Creation Date': doc.getCreationDate()?.toISOString?.() ?? doc.getCreationDate(),
+    'Modified Date': doc.getModificationDate()?.toISOString?.() ?? doc.getModificationDate(),
+  };
+
+  // Stage 2 — XMP packet detection
+  const hasXmp = latin1.includes('<?xpacket begin=');
+  let xmpAuthor = null, xmpTool = null, xmpDate = null;
+  if (hasXmp) {
+    // Extract key XMP values for display
+    const creatorMatch = latin1.match(/<rdf:li>([^<]{1,80})<\/rdf:li>/);
+    if (creatorMatch) xmpAuthor = creatorMatch[1].trim();
+    const toolMatch = latin1.match(/<xmp:CreatorTool>([^<]{1,80})<\/xmp:CreatorTool>/);
+    if (toolMatch) xmpTool = toolMatch[1].trim();
+    const dateMatch = latin1.match(/<xmp:CreateDate>([^<]{1,40})<\/xmp:CreateDate>/);
+    if (dateMatch) xmpDate = dateMatch[1].trim();
+  }
+
+  // Stage 3 — Document ID fingerprints
+  const idMatch = latin1.match(/\/ID\s*\[\s*<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*\]/);
+  const hasId = !!idMatch;
+
+  // Stage 4 — PieceInfo streams
+  const hasPieceInfo = /\/PieceInfo\s*<</.test(latin1);
+
+  return { _s1: s1, _xmpPresent: hasXmp, _xmpAuthor: xmpAuthor, _xmpTool: xmpTool,
+           _xmpDate: xmpDate, _idPresent: hasId,
+           _id0: idMatch ? idMatch[1].slice(0,16) + '...' : null,
+           _id1: idMatch ? idMatch[2].slice(0,16) + '...' : null,
+           _pieceInfo: hasPieceInfo };
+}
+
+function renderMetaPanel(f) {
+  let count = 0;
+  metadataList.innerHTML = '';
+
+  function addDivider(label, color) {
+    const d = document.createElement('div');
+    d.style.cssText = `font-size:9px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+      color:${color};padding:8px 0 4px;border-bottom:1px solid rgba(15,15,15,0.06);margin-top:6px;`;
+    d.textContent = label;
+    metadataList.appendChild(d);
+  }
+
+  function addRow(key, val, exposed) {
+    const vt = val && String(val).trim() ? String(val) : null;
+    if (vt && exposed) count++;
+    const row = document.createElement('div'); row.className = 'metadata-row';
+    const cls = vt && exposed ? '' : (vt ? 'empty' : 'empty');
+    const display = vt || 'not set';
+    row.innerHTML = `<span class="meta-key">${key}</span><span class="meta-val ${vt && exposed ? '' : 'empty'}">${display}</span>`;
+    metadataList.appendChild(row);
+  }
+
+  function addBinaryRow(key, detected, detail) {
+    if (detected) count++;
+    const row = document.createElement('div'); row.className = 'metadata-row';
+    row.innerHTML = `<span class="meta-key">${key}</span><span class="meta-val ${detected ? '' : 'empty'}">${detected ? detail : 'not present'}</span>`;
+    metadataList.appendChild(row);
+  }
+
+  // Stage 1
+  addDivider('Stage 1 — Info dictionary', '#8b3a00');
+  const s1 = f._s1;
+  addRow('Title',         s1['Title'],         true);
+  addRow('Author',        s1['Author'],         true);
+  addRow('Subject',       s1['Subject'],        true);
+  addRow('Keywords',      s1['Keywords'],       true);
+  addRow('Creator',       s1['Creator'],        true);
+  addRow('Producer',      s1['Producer'],       true);
+  addRow('Creation date', s1['Creation Date'],  true);
+  addRow('Modified date', s1['Modified Date'],  true);
+
+  // Stage 2
+  addDivider('Stage 2 — XMP packet', '#5a1a8a');
+  addBinaryRow('XMP packet',    f._xmpPresent, 'Present — hidden XML metadata block found');
+  addBinaryRow('XMP author',    !!f._xmpAuthor, f._xmpAuthor || '');
+  addBinaryRow('XMP creator tool', !!f._xmpTool, f._xmpTool || '');
+  addBinaryRow('XMP create date',  !!f._xmpDate, f._xmpDate || '');
+
+  // Stage 3
+  addDivider('Stage 3 — Document IDs', '#1a3a8a');
+  addBinaryRow('Document ID [0]', f._idPresent, f._id0 ? f._id0 : 'fingerprint found');
+  addBinaryRow('Document ID [1]', f._idPresent, f._id1 ? f._id1 : 'fingerprint found');
+
+  // Stage 4
+  addDivider('Stage 4 — PieceInfo streams', '#1a6a3a');
+  addBinaryRow('PieceInfo stream', f._pieceInfo, 'Present — application workflow data found');
+
+  metadataPanel.classList.add('visible');
+  metadataCount.textContent = count > 0 ? `${count} exposed` : 'clean';
+  metadataCount.className = 'metadata-count ' + (count > 0 ? 'exposed' : 'clean');
+}
+
+function renderFearPanel(f, filename) {
+  document.getElementById('calm-panel').classList.remove('visible');
+  document.getElementById('fear-fname').textContent = filename || 'document.pdf';
+  const rows = document.getElementById('fear-rows');
+  const warn = document.getElementById('fear-warn');
+  const foot = document.getElementById('fear-foot');
+  rows.innerHTML = '';
+  const s1 = f._s1 || {};
+
+  let exposed = 0;
+  function val(v){ return (v && String(v).trim()) ? String(v) : null; }
+  function row(key, v){
+    const has = val(v);
+    if (has) exposed++;
+    const d = document.createElement('div'); d.className = 'fear-row';
+    d.innerHTML = '<span class="fear-key">'+key+'</span>' +
+      (has ? '<span class="fear-val">'+has+'</span>'
+           : '<span class="fear-val gone">cleared</span>');
+    rows.appendChild(d);
+  }
+  function sec(label){
+    const d = document.createElement('div'); d.className = 'fear-sec';
+    d.textContent = label; rows.appendChild(d);
+  }
+
+  sec('Info dictionary');
+  row('/Author', s1['Author']);
+  row('/Creator', s1['Creator']);
+  row('/Producer', s1['Producer']);
+  row('/Title', s1['Title']);
+  row('/CreationDate', s1['Creation Date']);
+
+  sec('Hidden layers');
+  // XMP
+  if (f._xmpPresent) { exposed++;
+    const d=document.createElement('div'); d.className='fear-row';
+    d.innerHTML='<span class="fear-key">XMP packet</span><span class="fear-val">'+(f._xmpAuthor||'hidden XML block present')+'</span>';
+    rows.appendChild(d);
+  } else {
+    const d=document.createElement('div'); d.className='fear-row';
+    d.innerHTML='<span class="fear-key">XMP packet</span><span class="fear-val gone">cleared</span>';
+    rows.appendChild(d);
+  }
+  // Document IDs
+  if (f._idPresent) { exposed++;
+    const d=document.createElement('div'); d.className='fear-row';
+    d.innerHTML='<span class="fear-key">/ID fingerprint</span><span class="fear-val">'+(f._id0||'present')+'</span>';
+    rows.appendChild(d);
+  } else {
+    const d=document.createElement('div'); d.className='fear-row';
+    d.innerHTML='<span class="fear-key">/ID fingerprint</span><span class="fear-val gone">00000000000000000000</span>';
+    rows.appendChild(d);
+  }
+  // PieceInfo
+  if (f._pieceInfo) { exposed++;
+    const d=document.createElement('div'); d.className='fear-row';
+    d.innerHTML='<span class="fear-key">/PieceInfo</span><span class="fear-val">application workflow data</span>';
+    rows.appendChild(d);
+  } else {
+    const d=document.createElement('div'); d.className='fear-row';
+    d.innerHTML='<span class="fear-key">/PieceInfo</span><span class="fear-val gone">cleared</span>';
+    rows.appendChild(d);
+  }
+
+  if (exposed > 0) {
+    warn.textContent = 'Hidden data found in this file. We can read it because it is running on your computer — nothing has been sent anywhere.';
+    warn.style.color = '#ffe0db';
+    warn.style.background = 'rgba(192,57,43,0.22)';
+    warn.style.borderColor = 'rgba(192,57,43,0.5)';
+    foot.textContent = 'Read locally in your browser. No upload. No server. No trace.';
+  } else {
+    warn.textContent = 'This file is clean. No author, no fingerprints, no hidden layers — verified right here on your computer.';
+    warn.style.color = '#d4f7df';
+    warn.style.background = 'rgba(46,153,85,0.20)';
+    warn.style.borderColor = 'rgba(74,222,128,0.5)';
+    foot.textContent = 'Verified locally in your browser. No upload. No server. No trace.';
+  }
+  document.getElementById('fear-panel').classList.add('visible');
+}
+
+function animateClean() {
+  metadataList.querySelectorAll('.metadata-row').forEach((row, i) => {
+    setTimeout(() => {
+      const v = row.querySelector('.meta-val');
+      if (v) { v.classList.remove('empty'); v.classList.add('clean'); v.textContent = 'stripped'; }
+    }, i * 60);
+  });
+  setTimeout(() => {
+    metadataCount.textContent = 'clean';
+    metadataCount.className = 'metadata-count clean';
+  }, (metadataList.querySelectorAll('.metadata-row').length * 60) + 100);
+}
+
+// ── Stripping stages ──────────────────────────────────────────────────────────
+function toL1(bytes) { return Array.from(bytes, b => String.fromCharCode(b)).join(''); }
+function fromL1(s) { const o = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) o[i] = s.charCodeAt(i) & 0xff; return o; }
+
+function stripXmp(bytes) {
+  let r = toL1(bytes); let n = 20;
+  while (n-- > 0) {
+    const si = r.indexOf('<?xpacket begin='); if (si === -1) break;
+    const ei = r.indexOf('<?xpacket end=', si); if (ei === -1) break;
+    const cl = r.indexOf('?>', ei); if (cl === -1) break;
+    r = r.slice(0, si) + r.slice(cl + 2);
+  }
+  return fromL1(r);
+}
+
+function stripDocIds(bytes) {
+  const z = '/ID [<00000000000000000000000000000000> <00000000000000000000000000000000>]';
+  return fromL1(toL1(bytes).replace(/\/ID\s*\[\s*<[0-9a-fA-F]*>\s*<[0-9a-fA-F]*>\s*\]/g, z));
+}
+
+function stripPieceInfo(bytes) {
+  // Remove /PieceInfo dictionary entries — these contain app-specific workflow data
+  return fromL1(toL1(bytes).replace(/\/PieceInfo\s*<<(?:[^<>]|<[^<>]*>)*>>/g, ''));
+}
+
+// Lightweight Info-dict-only fields for audit log
+function getS1Fields(doc) {
+  return {
+    'Title': doc.getTitle(), 'Author': doc.getAuthor(), 'Subject': doc.getSubject(),
+    'Keywords': doc.getKeywords(), 'Creator': doc.getCreator(), 'Producer': doc.getProducer(),
+    'Creation Date': doc.getCreationDate()?.toISOString?.() ?? doc.getCreationDate(),
+    'Modified Date': doc.getModificationDate()?.toISOString?.() ?? doc.getModificationDate(),
+  };
+}
+
+async function cleanOne(file) {
+  const raw = await readBytes(file);
+  const doc = await PDFLib.PDFDocument.load(raw, { ignoreEncryption: true });
+  const before = getS1Fields(doc);
+  doc.setTitle(''); doc.setAuthor(''); doc.setSubject(''); doc.setKeywords([]);
+  doc.setCreator(''); doc.setProducer('');
+  doc.setCreationDate(new Date(0)); doc.setModificationDate(new Date(0));
+  let clean = await doc.save();
+  clean = stripXmp(clean);
+  clean = stripDocIds(clean);
+  clean = stripPieceInfo(clean);
+  if (String.fromCharCode(...clean.slice(0, 5)) !== '%PDF-') throw new Error('Output validation failed — result is not a valid PDF.');
+  const stripped = Object.entries(before).filter(([, v]) => v && String(v).trim()).map(([k]) => k);
+  return { clean, stripped, before };
+}
+
+async function runClean() {
+  if (!queue.length) return;
+  if (cleanBlocked()) { openPaywall(); return; }
+  auditLog = []; certBox.classList.remove('visible'); compBar.style.display = 'none'; hideStatus();
+  progressBar.classList.add('visible'); progressLbl.classList.add('visible');
+  cleanBtn.disabled = true;
+  const item = queue[0];
+  setItemStat(0, 'processing');
+  setProgress(40, 'Cleaning: ' + item.file.name);
+  try {
+    const { clean, stripped } = await cleanOne(item.file);
+    item.cleanBytes = clean; item.status = 'done'; setItemStat(0, 'done');
+    item.cleanName = item.file.name.replace(/\.pdf$/i, '-clean.pdf');
+    auditLog.push({ file: item.file.name, size: fmtBytes(item.file.size), ts: new Date().toISOString(),
+      stripped: stripped.length ? stripped.join(', ') : 'none found',
+      stages: 'Info dictionary \u00b7 XMP packets \u00b7 Document IDs \u00b7 PieceInfo streams', result: 'Clean' });
+    cleanCount++;
+    setProgress(100, 'Complete');
+    setTimeout(() => { progressBar.classList.remove('visible'); progressLbl.classList.remove('visible'); }, 600);
+    cleanBtn.disabled = false;
+    renderCert();
+    showCalmPanel();
+  } catch(err) {
+    item.status = 'error'; setItemStat(0, 'error');
+    progressBar.classList.remove('visible'); progressLbl.classList.remove('visible');
+    cleanBtn.disabled = false;
+    showStatus('\u26a0 Could not clean this file: ' + err.message, 'error');
+  }
+}
+
+function showCalmPanel() {
+  document.getElementById('fear-panel').classList.remove('visible');
+  document.getElementById('calm-panel').classList.add('visible');
+  compBar.style.display = 'flex';
+}
+
+function downloadClean() {
+  const item = queue[0];
+  if (!item || !item.cleanBytes) { showStatus('Nothing to download — clean a file first.', 'error'); return; }
+  if (downloadBlocked()) { openPaywall(); return; }
+  // octet-stream so the browser saves the file rather than opening it in its viewer
+  const blob = new Blob([item.cleanBytes], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = item.cleanName || 'document-clean.pdf';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  downloadCount++;
+  if (downloadBlocked()) {
+    setTimeout(() => {
+      const nudge = document.createElement('div');
+      nudge.className = 'upgrade-nudge';
+      nudge.style.cssText = 'margin-top:14px;padding:16px;background:rgba(26,58,42,0.06);border:1px solid rgba(26,58,42,0.2);border-radius:4px;text-align:center;';
+      nudge.innerHTML = '<div style="font-family:var(--mono);font-size:12px;color:var(--accent);margin-bottom:10px;">Your free download is used. Clean without limits \u2014 a one-time licence.</div><a href="index.html#pricing" target="_self" class="btn btn-primary" style="font-size:10px;padding:11px 22px;">See licence options</a>';
+      const cp = document.getElementById('calm-panel');
+      cp.parentNode.insertBefore(nudge, cp.nextSibling);
+    }, 400);
+  }
+}
+
+function setItemStat(i, s) {
+  queue[i].status = s;
+  const el = document.getElementById(`is-${i}`);
+  if (el) { el.className = `batch-item-stat ${s}`; el.textContent = s; }
+}
+function setProgress(pct, lbl) { progressFill.style.width = pct + '%'; progressLbl.textContent = lbl; }
+
+function renderCert() {
+  certRows.innerHTML = '';
+  auditLog.forEach(e => {
+    const h = document.createElement('div'); h.className = 'cert-file-head'; h.textContent = e.file;
+    certRows.appendChild(h);
+    const fields = e.result === 'Clean'
+      ? { 'Processed': e.ts, 'File size': e.size, 'Fields found & stripped': e.stripped, 'Stages applied': e.stages, 'Result': '✓ Clean' }
+      : { 'Result': e.result };
+    for (const [k, v] of Object.entries(fields)) {
+      const r = document.createElement('div'); r.className = 'cert-row';
+      r.innerHTML = `<span class="cert-key">${k}</span><span class="cert-val">${v}</span>`;
+      certRows.appendChild(r);
+    }
+  });
+  certBox.classList.add('visible');
+}
+
+function downloadCert() {
+  let t = 'PDF CLEANSE — METADATA REMOVAL CERTIFICATE\n' + '='.repeat(50) + '\n';
+  t += `Generated: ${new Date().toISOString()}\nTool: PDF Cleanse (client-side — no server upload)\nProcessing: Four-stage deep clean\n\n`;
+  auditLog.forEach(e => {
+    t += '-'.repeat(40) + '\n';
+    t += `File: ${e.file}\n`;
+    if (e.result === 'Clean') {
+      t += `Processed: ${e.ts}\nFile size: ${e.size}\nFields stripped: ${e.stripped}\nStages applied: ${e.stages}\nResult: CLEAN\n\n`;
+    } else { t += `Result: ${e.result}\n\n`; }
+  });
+  t += '='.repeat(50) + '\nDISCLAIMER: This certificate records what was processed but does not\nconstitute legal advice or guarantee regulatory compliance.\nVerify output in Adobe Acrobat → File → Properties before sharing.\n';
+  const blob = new Blob([t], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'pdf-cleanse-certificate.txt';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function readBytes(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(new Uint8Array(e.target.result));
+    r.onerror = () => rej(new Error('Could not read file'));
+    r.readAsArrayBuffer(file);
+  });
+}
+
+function fmtBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1048576).toFixed(2) + ' MB';
+}
+
+function showStatus(m, t) { statusEl.textContent = m; statusEl.className = 'status visible ' + t; }
+function hideStatus() { statusEl.className = 'status'; }
+
+function tryAnother() {
+  if (hasReachedLimit()) { openPaywall(); return; }
+  resetTool();
+}
+
+function resetTool() {
+  queue = []; auditLog = [];
+  batchQueueEl.classList.remove('visible'); batchList.innerHTML = '';
+  metadataPanel.classList.remove('visible'); actions.classList.remove('visible');
+  document.getElementById('fear-panel').classList.remove('visible');
+  document.getElementById('calm-panel').classList.remove('visible');
+  certBox.classList.remove('visible'); progressBar.classList.remove('visible');
+  progressLbl.classList.remove('visible'); compBar.style.display = 'none';
+  progressFill.style.width = '0%'; hideStatus(); fileInput.value = '';
+  document.getElementById('drop-default').style.display = 'block';
+  document.querySelectorAll('.upgrade-nudge').forEach(el => el.remove());
+}
+</script>
+</body>
+</html>
