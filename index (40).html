@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Cleanse — Strip Hidden Metadata. No Upload. No Risk.</title>
+<meta name="description" content="Remove hidden metadata from PDFs entirely in your browser. No server upload. Used by legal, HR and FOIA teams. Workflow support for GDPR, HIPAA, CCPA and DUAA. From £97.">
+<meta property="og:title" content="PDF Cleanse — Your PDF Never Leaves Your Browser">
+<meta property="og:description" content="Strip hidden author names, XMP packets and document fingerprints from PDFs. Client-side only. Audit certificate included.">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --ink:#0a0a0a;
+  --paper:#f7f4ee;
+  --paper2:#eeebE3;
+  --accent:#1c3d2b;
+  --accent2:#2e6647;
+  --gold:#8b6914;
+  --gold-l:#f0e6c8;
+  --red:#b83232;
+  --rule:rgba(10,10,10,0.12);
+  --serif:'Playfair Display',Georgia,serif;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;overflow-x:hidden}
+
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");pointer-events:none;z-index:999;opacity:.5}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 40px;display:flex;justify-content:space-between;align-items:center;background:rgba(247,244,238,0.92);backdrop-filter:blur(12px);border-bottom:0.5px solid var(--rule)}
+.nav-logo{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--accent2);text-decoration:none}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-links a{font-family:var(--mono);font-size:11px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:rgba(10,10,10,0.5);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--ink)}
+.nav-cta{background:var(--accent);color:var(--paper)!important;padding:9px 20px;border-radius:2px;letter-spacing:.12em!important}
+.nav-cta:hover{background:var(--accent2)!important}
+
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:120px 40px 80px;max-width:1100px;margin:0 auto;position:relative}
+.hero-eyebrow{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.25em;text-transform:uppercase;color:var(--accent2);margin-bottom:24px;opacity:0;animation:fadeUp .6s .1s forwards}
+.hero h1{font-family:var(--serif);font-size:clamp(42px,7vw,82px);line-height:1.05;font-weight:700;margin-bottom:8px;opacity:0;animation:fadeUp .7s .2s forwards}
+.hero h1 em{font-style:italic;color:var(--accent)}
+.hero-sub{font-family:var(--serif);font-size:clamp(18px,2.5vw,26px);font-weight:400;font-style:italic;color:rgba(10,10,10,0.45);margin-bottom:40px;opacity:0;animation:fadeUp .7s .3s forwards}
+.hero-trust{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:48px;opacity:0;animation:fadeUp .7s .4s forwards}
+.trust-pill{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:6px 14px;border:0.5px solid rgba(10,10,10,0.2);border-radius:2px;color:rgba(10,10,10,0.72)}
+.trust-pill.green{border-color:rgba(46,102,71,0.4);color:var(--accent2);background:rgba(46,102,71,0.05)}
+.hero-actions{display:flex;gap:16px;flex-wrap:wrap;opacity:0;animation:fadeUp .7s .5s forwards}
+
+.btn{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;padding:16px 32px;border:none;border-radius:2px;cursor:pointer;text-decoration:none;display:inline-block;transition:all .15s ease}
+.btn-primary{background:var(--accent);color:var(--paper)}
+.btn-primary:hover{background:var(--accent2)}
+.btn-outline{background:transparent;color:var(--ink);border:1px solid rgba(10,10,10,0.25)}
+.btn-outline:hover{border-color:var(--ink)}
+
+section{padding:80px 40px}
+.container{max-width:1000px;margin:0 auto}
+.s-label{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:rgba(10,10,10,0.4);margin-bottom:20px}
+.s-title{font-family:var(--serif);font-size:clamp(28px,4vw,44px);line-height:1.15;margin-bottom:16px}
+.s-body{font-size:15px;color:rgba(10,10,10,0.6);line-height:1.7;max-width:580px}
+
+.audit-strip{background:var(--accent);padding:60px 40px;text-align:center}
+.audit-strip h2{font-family:var(--serif);font-size:clamp(24px,4vw,40px);color:var(--paper);margin-bottom:12px;line-height:1.2}
+.audit-strip p{font-family:var(--mono);font-size:12px;color:rgba(247,244,238,0.6);letter-spacing:.06em;margin-bottom:32px}
+.audit-demo{background:rgba(247,244,238,0.06);border:1px solid rgba(247,244,238,0.15);border-radius:4px;padding:24px;max-width:580px;margin:0 auto 28px;text-align:left;font-family:var(--mono);font-size:12px;color:rgba(247,244,238,0.9);line-height:1.8}
+.audit-field{display:flex;gap:16px}
+.af-key{color:rgba(247,244,238,0.4);width:130px;flex-shrink:0}
+.af-val{color:#e8a87c}
+.af-val.clean{color:rgba(247,244,238,0.35);font-style:italic}
+.audit-strip input[type=file]{display:none}
+.audit-upload{background:rgba(247,244,238,0.1);border:1px dashed rgba(247,244,238,0.3);border-radius:4px;padding:20px 32px;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(247,244,238,0.6);transition:all .2s;display:inline-block;margin-bottom:16px}
+.audit-upload:hover{background:rgba(247,244,238,0.15);border-color:rgba(247,244,238,0.5)}
+
+.problem{background:var(--paper2)}
+.reveal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:40px}
+.reveal-card{background:var(--paper);border:0.5px solid var(--rule);border-radius:4px;padding:20px}
+.rc-stage{font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--accent2);margin-bottom:8px}
+.rc-title{font-family:var(--serif);font-size:17px;margin-bottom:6px}
+.rc-body{font-size:13px;color:rgba(10,10,10,0.55);line-height:1.5}
+.rc-risk{margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:.06em}
+
+.steps-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0;margin-top:48px;border:0.5px solid var(--rule);border-radius:4px;overflow:hidden}
+.step-box{padding:28px 24px;border-right:0.5px solid var(--rule);position:relative}
+.step-box:last-child{border-right:none}
+.step-n{font-family:var(--serif);font-size:48px;color:rgba(10,10,10,0.07);line-height:1;margin-bottom:12px}
+.step-t{font-size:14px;font-weight:500;margin-bottom:6px}
+.step-d{font-size:13px;color:rgba(10,10,10,0.5);line-height:1.5}
+
+.pricing{background:var(--paper2)}
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-top:40px;max-width:1040px}
+.price-card{background:var(--paper);border:0.5px solid var(--rule);border-radius:4px;padding:32px;position:relative}
+.price-card.featured{border:2px solid var(--accent);background:var(--paper)}
+.price-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--paper);font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:4px 14px;border-radius:2px;white-space:nowrap}
+.price-tier{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:rgba(10,10,10,0.75);margin-bottom:12px}
+.price-amount{font-family:var(--serif);font-size:44px;font-weight:700;color:var(--ink);line-height:1;margin-bottom:4px}
+.price-amount span{font-size:20px;font-weight:400}
+.price-period{font-family:var(--mono);font-size:11px;color:rgba(10,10,10,0.7);margin-bottom:16px;letter-spacing:.06em}
+.price-who{font-size:13px;color:rgba(10,10,10,0.78);margin-bottom:20px;line-height:1.5;border-bottom:0.5px solid var(--rule);padding-bottom:16px}
+.price-features{list-style:none;margin-bottom:24px}
+.price-features li{font-family:var(--mono);font-size:11px;color:rgba(10,10,10,0.82);padding:5px 0;letter-spacing:.03em;display:flex;gap:8px;align-items:flex-start}
+.price-features li::before{content:'✓';color:var(--accent2);flex-shrink:0;font-weight:700}
+.price-amount.poa{font-family:var(--mono);font-size:22px;font-weight:500;letter-spacing:.08em;color:var(--ink);padding-top:14px;padding-bottom:6px}
+
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:40px}
+.comp-card{padding:20px;border:0.5px solid var(--rule);border-radius:4px;background:var(--paper)}
+.comp-flag{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.comp-flag.full{color:var(--accent2)}
+.comp-flag.partial{color:var(--gold)}
+.comp-name{font-family:var(--serif);font-size:17px;margin-bottom:6px}
+.comp-text{font-size:13px;color:rgba(10,10,10,0.55);line-height:1.5}
+
+
+.faq-list{margin-top:40px;border-top:0.5px solid var(--rule)}
+.faq-item{border-bottom:0.5px solid var(--rule);padding:20px 0;cursor:pointer}
+.faq-q{display:flex;justify-content:space-between;align-items:center;font-family:var(--serif);font-size:17px}
+.faq-icon{font-family:var(--mono);font-size:18px;color:rgba(10,10,10,0.3);transition:transform .2s;flex-shrink:0}
+.faq-a{font-size:14px;color:rgba(10,10,10,0.8);line-height:1.7;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
+.faq-item.open .faq-a{max-height:240px;padding-top:12px}
+.faq-item.open .faq-icon{transform:rotate(45deg)}
+
+footer{background:var(--ink);padding:48px 40px;color:rgba(247,244,238,0.55)}
+.footer-inner{max-width:1000px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+.footer-logo{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:rgba(247,244,238,0.5)}
+.footer-links{display:flex;gap:24px;flex-wrap:wrap}
+.footer-links a{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(247,244,238,0.45);text-decoration:none}
+.footer-links a:hover{color:rgba(247,244,238,0.75)}
+.footer-contact{width:100%;margin-top:28px;padding-top:24px;border-top:0.5px solid rgba(247,244,238,0.12);text-align:center}
+.footer-contact-label{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(247,244,238,0.4);margin-bottom:10px}
+.footer-contact-email{font-family:var(--serif);font-size:22px;font-weight:600;color:rgba(247,244,238,0.92);text-decoration:none;letter-spacing:.01em}
+.footer-contact-email:hover{color:var(--paper)}
+.footer-copy{font-family:var(--mono);font-size:10px;width:100%;margin-top:20px;padding-top:20px;border-top:0.5px solid rgba(247,244,238,0.1);letter-spacing:.06em;color:rgba(247,244,238,0.45);line-height:1.6}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:translateY(0)}
+
+abbr[title]{text-decoration:none;cursor:help;border:none;position:relative;display:inline}
+abbr[title]::after{content:'?';display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;margin-left:4px;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--accent2);background:rgba(46,102,71,0.14);border:1px solid rgba(46,102,71,0.45);border-radius:50%;line-height:1;vertical-align:1px;transition:all .15s ease}
+abbr[title]:hover::after,abbr[title]:focus::after{background:var(--accent2);color:var(--paper);border-color:var(--accent2)}
+.audit-strip abbr[title]::after{color:rgba(247,244,238,0.85);background:rgba(247,244,238,0.12);border-color:rgba(247,244,238,0.45)}
+.audit-strip abbr[title]:hover::after{background:var(--paper);color:var(--accent);border-color:var(--paper)}
+.tt-pop{position:fixed;z-index:500;max-width:320px;padding:14px 18px;background:#0a0a0a;color:#f7f4ee;font-family:var(--sans);font-size:14px;line-height:1.55;letter-spacing:.01em;border-radius:4px;box-shadow:0 8px 24px rgba(0,0,0,0.3);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s ease,transform .12s ease}
+.tt-pop.show{opacity:1;transform:translateY(0)}
+.tt-pop::before{content:'';position:absolute;top:-5px;left:14px;width:10px;height:10px;background:#0a0a0a;transform:rotate(45deg)}
+
+@media(max-width:768px){
+  nav{padding:16px 20px}
+  .nav-links{gap:16px}
+  .nav-links a:not(.nav-cta){display:none}
+  .hero{padding:100px 20px 60px}
+  section{padding:60px 20px}
+  .audit-strip{padding:48px 20px}
+  .steps-row{grid-template-columns:1fr}
+  .step-box{border-right:none;border-bottom:0.5px solid var(--rule)}
+  .step-box:last-child{border-bottom:none}
+  footer{padding:40px 20px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">PDF Cleanse</a>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#compliance">Compliance</a>
+    <a href="#duaa">DUAA</a>
+    <a href="#pricing">Pricing</a>
+    <a href="pdf-cleanse.html" class="nav-cta">Open tool</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">Privacy-first PDF tool for legal, HR &amp; government teams</div>
+  <h1>Your PDF never leaves<br><em>your browser.</em> Ever.</h1>
+  <p class="hero-sub">Strip hidden metadata that could expose your organisation before it does.</p>
+  <div class="hero-trust">
+    <span class="trust-pill green">No server upload</span>
+    <span class="trust-pill green">Batch processing</span>
+    <span class="trust-pill green">Audit certificate</span>
+    <span class="trust-pill green"><abbr title="Data (Use and Access) Act 2025 — UK legislation amending the Data Protection Act 2018. Full effect 19 June 2026">DUAA</abbr> workflow support · June 2026</span>
+    <span class="trust-pill"><abbr title="General Data Protection Regulation — applies in the UK as 'UK GDPR' under the Data Protection Act 2018, and in the EU">GDPR</abbr> · <abbr title="US: Health Insurance Portability and Accountability Act — federal health data law">HIPAA</abbr> · <abbr title="US: California Consumer Privacy Act — state-level privacy law">CCPA</abbr> aware</span>
+    <span class="trust-pill"><abbr title="Freedom of Information Act 2000 (UK) and Freedom of Information (Scotland) Act 2002 — public authority disclosure law">FOIA</abbr> disclosure ready</span>
+    <span class="trust-pill"><abbr title="Solicitors Regulation Authority — regulator for solicitors in England and Wales">SRA</abbr> workflow aware</span>
+  </div>
+  <div class="hero-actions">
+    <a href="#pricing" class="btn btn-primary">See pricing →</a>
+    <a href="pdf-cleanse.html" class="btn btn-outline">Try the tool free</a>
+    <a href="PDFCleanseWhitepaperv1_7.pdf" class="btn btn-outline" download>↓ Whitepaper (PDF, 12pp)</a>
+  </div>
+</div>
+
+<div class="audit-strip" id="audit">
+  <h2>See what your PDF is hiding right now</h2>
+  <p>Drop a file below. We scan it in your browser — nothing is uploaded anywhere.</p>
+
+  <div class="audit-demo" id="audit-demo">
+    <div class="audit-field"><span class="af-key">Author</span><span class="af-val" id="af-author">Drop a PDF to scan</span></div>
+    <div class="audit-field"><span class="af-key">Creator software</span><span class="af-val" id="af-creator">—</span></div>
+    <div class="audit-field"><span class="af-key">Creation date</span><span class="af-val" id="af-date">—</span></div>
+    <div class="audit-field"><span class="af-key">Document ID</span><span class="af-val" id="af-id">—</span></div>
+    <div class="audit-field"><span class="af-key">XMP packet</span><span class="af-val" id="af-xmp">—</span></div>
+    <div class="audit-field"><span class="af-key">PieceInfo streams</span><span class="af-val" id="af-pieceinfo">—</span></div>
+  </div>
+
+  <label class="audit-upload" for="audit-file">↑ Drop a PDF here to scan it</label>
+  <input type="file" id="audit-file" accept=".pdf">
+  <br>
+  <p id="audit-cta" style="display:none;margin-top:16px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:rgba(247,244,238,0.7);">
+    Ready to clean it? <a href="pdf-cleanse.html" style="color:#f0e6c8;text-decoration:underline;text-underline-offset:3px;">Open PDF Cleanse →</a>
+  </p>
+</div>
+
+<section class="problem" id="problem">
+  <div class="container">
+    <div class="s-label reveal">The hidden risk</div>
+    <h2 class="s-title reveal">Every PDF you share contains data you can't see</h2>
+    <p class="s-body reveal">When you send a contract, a <abbr title="Freedom of Information Act 2000 (UK) / Freedom of Information (Scotland) Act 2002 — used by public authorities to respond to disclosure requests">FOIA</abbr> response, or an HR document, hidden layers travel with it — readable by any software that opens the file. Most organisations don't know until it's too late.</p>
+
+    <div class="reveal-grid">
+      <div class="reveal-card reveal">
+        <div class="rc-stage">Stage 1</div>
+        <div class="rc-title">Info dictionary</div>
+        <div class="rc-body">Author name, job title, creation date, software version, revision count. Written automatically by Word, Acrobat and Google Docs.</div>
+        <div class="rc-risk">✗ Reveals author identity and internal tools</div>
+      </div>
+      <div class="reveal-card reveal">
+        <div class="rc-stage">Stage 2</div>
+        <div class="rc-title"><abbr title="Extensible Metadata Platform — Adobe's XML metadata format embedded inside PDFs">XMP</abbr> packets</div>
+        <div class="rc-body">Adobe's extended metadata format embedded as XML inside the file body. Invisible in viewers. Fully readable by forensic software.</div>
+        <div class="rc-risk">✗ Survives most standard cleaning tools</div>
+      </div>
+      <div class="reveal-card reveal">
+        <div class="rc-stage">Stage 3</div>
+        <div class="rc-title">Document IDs</div>
+        <div class="rc-body">Two unique hexadecimal fingerprints in the PDF trailer. Link document versions. Can identify a file even after metadata removal.</div>
+        <div class="rc-risk">✗ Missed by Smallpdf and most online tools</div>
+      </div>
+      <div class="reveal-card reveal">
+        <div class="rc-stage">Stage 4</div>
+        <div class="rc-title"><abbr title="Application workflow data written into PDFs by tools like InDesign, Illustrator and Acrobat">PieceInfo</abbr> streams</div>
+        <div class="rc-body">Application workflow data written by InDesign, Illustrator and Acrobat. Contains internal project names, operator IDs and stage information.</div>
+        <div class="rc-risk">✗ Rarely stripped by any competing tool</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="container">
+    <div class="s-label reveal">How it works</div>
+    <h2 class="s-title reveal">Three steps. Under thirty seconds.</h2>
+    <p class="s-body reveal">No account. No installation. No network traffic during processing.</p>
+
+    <div class="steps-row reveal">
+      <div class="step-box">
+        <div class="step-n">01</div>
+        <div class="step-t">Drop your PDFs</div>
+        <div class="step-d">Single file or batch. Read entirely in your browser via the FileReader API. Nothing leaves your device.</div>
+      </div>
+      <div class="step-box">
+        <div class="step-n">02</div>
+        <div class="step-t">See what's exposed</div>
+        <div class="step-d">Every metadata field is surfaced before you clean. Author names, dates, software fingerprints — all visible.</div>
+      </div>
+      <div class="step-box">
+        <div class="step-n">03</div>
+        <div class="step-t">Clean &amp; certify</div>
+        <div class="step-d">Four-stage deep clean. Clean files download instantly. A dated audit certificate documents every removal.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="problem" id="compliance">
+  <div class="container">
+    <div class="s-label reveal">Compliance coverage</div>
+    <h2 class="s-title reveal">Built for the frameworks that matter</h2>
+    <p class="s-body reveal">PDF Cleanse supports — but does not replace — your compliance obligations. Consult your DPO or legal counsel for specific requirements.</p>
+
+    <div class="comp-grid">
+      <div class="comp-card reveal">
+        <div class="comp-flag full">Relevant to</div>
+        <div class="comp-name"><abbr title="UK GDPR — the UK's retained version of the EU General Data Protection Regulation, sitting alongside the Data Protection Act 2018">GDPR</abbr> — Articles 5 &amp; 17</div>
+        <div class="comp-text">Removes metadata layers relevant to data minimisation and erasure workflows. All processing is client-side: no document data is transmitted to the vendor.</div>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-flag full">Relevant to</div>
+        <div class="comp-name">UK GDPR / <abbr title="Information Commissioner's Office — UK regulator enforcing data protection law">ICO</abbr> 2025</div>
+        <div class="comp-text">Removes the metadata layers identified in ICO's 2025 anonymisation guidance as relevant to re-identification risk.</div>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-flag full">Relevant to</div>
+        <div class="comp-name"><abbr title="US: Health Insurance Portability and Accountability Act — federal law governing protected health information">HIPAA</abbr> workflows</div>
+        <div class="comp-text">Removes author and document metadata that may carry identifiers. All processing is client-side: no document data is transmitted to the vendor.</div>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-flag full">Relevant to</div>
+        <div class="comp-name"><abbr title="US: California Consumer Privacy Act — state-level privacy law for California residents">CCPA</abbr></div>
+        <div class="comp-text">Removes personal identifiers embedded in documents before disclosure.</div>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-flag partial">Workflow</div>
+        <div class="comp-name"><abbr title="Solicitors Regulation Authority — regulator for solicitors in England and Wales">SRA</abbr> / Law Society</div>
+        <div class="comp-text">Fits document-checking workflows before disclosure. The audit certificate provides a process record for file notes.</div>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-flag partial">Workflow</div>
+        <div class="comp-name"><abbr title="Freedom of Information Act 2000 (UK) and Freedom of Information (Scotland) Act 2002 — public authority disclosure laws">FOIA</abbr> — UK &amp; Scottish</div>
+        <div class="comp-text">Fits document-preparation workflows before release. The audit certificate integrates with disclosure logs.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="duaa">
+  <div class="container">
+    <div class="s-label reveal">June 2026 update</div>
+    <h2 class="s-title reveal">Built for the 19 June 2026 update</h2>
+    <p class="s-body reveal">The Data (Use and Access) Act 2025 takes full effect on 19 June 2026, with updated <abbr title="Information Commissioner's Office — UK regulator enforcing data protection law">ICO</abbr> guidance on <abbr title="Data Subject Access Request — an individual's right under UK GDPR to obtain a copy of their personal data held by an organisation">DSAR</abbr> handling, recipient disclosure, and the new statutory complaints duty. PDF Cleanse provides a documented, repeatable step in document-preparation workflows — metadata removal with a per-file audit record before a document leaves your organisation.</p>
+
+    <div style="margin-top:32px;padding:28px;background:var(--paper);border:0.5px solid var(--rule);border-radius:4px;max-width:680px;">
+      <div style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--accent2);margin-bottom:14px;">Every licence includes</div>
+      <ul style="list-style:none;padding:0;margin:0;">
+        <li style="font-size:14px;padding:8px 0;border-bottom:0.5px solid var(--rule);display:flex;gap:10px;align-items:flex-start;"><span style="color:var(--accent2);font-weight:700;flex-shrink:0;">✓</span><span><strong>Two-page Document Disclosure Workflow Guide</strong> — mapping the tool to ICO requirements for DSARs, FOIA responses, and complaint handling under DUAA.</span></li>
+        <li style="font-size:14px;padding:8px 0;border-bottom:0.5px solid var(--rule);display:flex;gap:10px;align-items:flex-start;"><span style="color:var(--accent2);font-weight:700;flex-shrink:0;">✓</span><span><strong><a href="PDFCleanseWhitepaperv1_7.pdf" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent);">Technical whitepaper</a></strong> — twelve pages of architecture, framework reference, and deployment guidance for your IT team.</span></li>
+        <li style="font-size:14px;padding:8px 0;display:flex;gap:10px;align-items:flex-start;"><span style="color:var(--accent2);font-weight:700;flex-shrink:0;">✓</span><span><strong>6 months of update cover</strong> (12 months for Firm/Enterprise) — when ICO guidance changes or new metadata standards emerge, we email you the updated tool and guide. No phone-home, no server check — just a human email when something material changes. After that, optional £47/year keeps your cover current. Your tool keeps working forever; cover is only for new guidance.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="s-label reveal">Pricing</div>
+    <h2 class="s-title reveal">One price. No subscription. No surprises.</h2>
+    <p class="s-body reveal">One-time purchase. No subscription. 12 months of update cover included.</p>
+
+    <div class="pricing-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));max-width:920px;">
+
+      <div class="price-card reveal">
+        <div class="price-tier">Solo</div>
+        <div class="price-amount"><span>£</span>97</div>
+        <div class="price-period">One-time · lifetime licence</div>
+        <div class="price-who">For 1 user, on any device they use. FOI officers, paralegals, sole practitioners, HR leads who need a reliable private tool.</div>
+        <ul class="price-features">
+          <li>1 named user</li>
+          <li>Four-stage deep clean</li>
+          <li>Batch processing</li>
+          <li>Audit certificate per session</li>
+          <li>DUAA workflow guide included</li>
+          <li>Technical whitepaper included</li>
+          <li>6 months of update cover</li>
+        </ul>
+        <a href="https://buy.stripe.com/14AbJ24Tm6RZ8lNbbGdby02" class="btn btn-outline" style="width:100%;text-align:center;display:block">Buy Solo — £97</a>
+      </div>
+
+      <div class="price-card featured reveal">
+        <div class="price-badge">Best for small practices</div>
+        <div class="price-tier">Practice</div>
+        <div class="price-amount"><span>£</span>227</div>
+        <div class="price-period">One-time · up to 5 users</div>
+        <div class="price-who">For micro firms and small practices. Covers up to 5 users in one organisation, on any device they use.</div>
+        <ul class="price-features">
+          <li>Up to 5 named users</li>
+          <li>Four-stage deep clean</li>
+          <li>Batch processing</li>
+          <li>Audit certificate per session</li>
+          <li>Shared drive / intranet deployment</li>
+          <li>DUAA workflow guide included</li>
+          <li>Technical whitepaper included</li>
+          <li>6 months of update cover</li>
+        </ul>
+        <a href="https://buy.stripe.com/fZuaEY0D6fovatV93ydby03" class="btn btn-primary" style="width:100%;text-align:center;display:block">Buy Practice — £227</a>
+      </div>
+
+      <div class="price-card reveal">
+        <div class="price-tier">Office</div>
+        <div class="price-amount"><span>£</span>457</div>
+        <div class="price-period">One-time · up to 10 users</div>
+        <div class="price-who">For small legal, HR or FOI teams. Up to 10 users in one organisation, on any device they use.</div>
+        <ul class="price-features">
+          <li>Up to 10 named users</li>
+          <li>Four-stage deep clean</li>
+          <li>Batch processing</li>
+          <li>Audit certificate per session</li>
+          <li>Shared drive / intranet deployment</li>
+          <li>DUAA workflow guide included</li>
+          <li>Technical whitepaper included</li>
+          <li>6 months of update cover</li>
+        </ul>
+        <a href="https://buy.stripe.com/14A00kfy02BJ6dFbbGdby01" class="btn btn-outline" style="width:100%;text-align:center;display:block">Buy Office — £457</a>
+      </div>
+
+      <div class="price-card reveal">
+        <div class="price-tier">Firm</div>
+        <div class="price-amount"><span>£</span>1,127</div>
+        <div class="price-period">One-time · up to 25 users</div>
+        <div class="price-who">For SME law firms, regional practices, and HR or compliance teams. Up to 25 users in one organisation, on any device they use.</div>
+        <ul class="price-features">
+          <li>Up to 25 named users</li>
+          <li>Four-stage deep clean</li>
+          <li>Batch processing</li>
+          <li>Audit certificate per session</li>
+          <li>Shared drive / intranet deployment</li>
+          <li>DUAA workflow guide included</li>
+          <li>Technical whitepaper included</li>
+          <li>Receipt · PO accepted on request</li>
+          <li>12 months of update cover</li>
+        </ul>
+        <a href="mailto:info@pdfcleanse.com?subject=PDF%20Cleanse%20Firm%20licence%20(25%20users)%20%E2%80%94%20%C2%A31%2C127&body=Hello%2C%0A%0APlease%20send%20a%20receipt%20or%20Stripe%20link%20for%20the%20Firm%20licence%20(%C2%A31%2C127%20%C2%B7%20up%20to%2025%20users).%0A%0AOrganisation%3A%20%0AContact%20name%3A%20%0APayment%20method%20(card%20%2F%20PO)%3A%20%0A%0AThank%20you." class="btn btn-outline" style="width:100%;text-align:center;display:block">Buy Firm — £1,127</a>
+      </div>
+
+      <div class="price-card reveal">
+        <div class="price-tier">Enterprise</div>
+        <div class="price-amount poa">POA</div>
+        <div class="price-period">Site licence · 25+ users</div>
+        <div class="price-who">For larger offices, departments, councils and firms needing a documented workflow at scale.</div>
+        <ul class="price-features">
+          <li>Site licence — unlimited devices in one organisation</li>
+          <li>Four-stage deep clean</li>
+          <li>Batch processing</li>
+          <li>Audit certificate per session</li>
+          <li>Extended technical brief — forensic architecture &amp; DUAA workflow pack</li>
+          <li>Priority email support — typically 4hr, office hours</li>
+          <li>Receipt · PO accepted · DPA on request</li>
+          <li>12 months of update cover</li>
+        </ul>
+        <a href="mailto:info@pdfcleanse.com?subject=PDF Cleanse Enterprise licence enquiry&amp;body=Hello%2C%0A%0APlease send a quote for the PDF Cleanse Enterprise licence.%0A%0AOrganisation%3A %0AApprox. number of users%3A %0AAny specific compliance requirements%3A %0A%0AThank you." class="btn btn-outline" style="width:100%;text-align:center;display:block">Request a quote →</a>
+      </div>
+
+    </div>
+
+    <div class="value-note reveal" style="max-width:720px;margin:30px auto 0;padding:18px 22px;background:var(--paper2);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.6;">
+      <strong>The time argument.</strong> Manually checking a PDF in Acrobat Properties and stripping each metadata layer by hand takes 10–15 minutes per file — and stops at the layers Acrobat can see. PDF Cleanse cleans the file in seconds, down to hex level; the full process — open, drop, clean, save, certificate — takes under a minute.
+      <br><br>
+      <em>That recovered time is non-billable admin you were already absorbing. <strong>It now goes back to billable work.</strong></em>
+    </div>
+
+    <p style="margin-top:24px;font-family:var(--mono);font-size:11px;color:rgba(10,10,10,0.65);letter-spacing:.06em;">
+      All tiers: receipt provided · Purchase orders accepted on Enterprise · 14-day refund if it doesn't fit your workflow.
+    </p>
+  </div>
+</section>
+
+
+
+<section id="faq">
+  <div class="container">
+    <div class="s-label reveal">Questions</div>
+    <h2 class="s-title reveal">Frequently asked</h2>
+    <div class="faq-list reveal">
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Why not just use Adobe Acrobat?<span class="faq-icon">+</span></div>
+        <div class="faq-a">Acrobat's Sanitize tool removes the metadata Acrobat can see — author, title, comments, basic XMP. It does not strip embedded hexadecimal residue, orphaned object streams, font-cache fingerprints, or producer-chain traces left by the originating application, and it produces no audit certificate, no SHA-256 hash, and no per-file record that sanitisation ran. PDF Cleanse performs a four-stage clean down to the byte level and issues a per-file audit certificate (PDF + JSON, SHA-256 hashed) — a documented, repeatable record of what was removed, when, and from which file. The <a href="PDFCleanseAuditMechanismTechnicalBriefv1_1.pdf" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent);">technical brief</a> sets out the architecture and certificate format in detail. Plus: no Adobe licence required (£2,400/year for 10 seats), no install, no procurement cycle, no per-user subscription. £97 one-time for one user, £227 for 5, £457 for 10, £1,127 for 25.</div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">How much paralegal time does this save?<span class="faq-icon">+</span></div>
+        <div class="faq-a">Manual metadata checking typically takes around 15 minutes per document. At a fully-loaded paralegal cost of roughly £40/hour, that's £10 per document in staff time — whether or not it gets billed on. A firm processing 10 documents a week spends around £4,800 a year on manual checks. The Practice tier pays for itself inside two weeks at that volume. PDF Cleanse processes a batch of twelve documents in under thirty seconds.</div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">How do I know my file genuinely isn't uploaded?<span class="faq-icon">+</span></div>
+        <div class="faq-a">Open your browser's developer tools (F12) → Network tab, then drop a file. You will see zero network requests made during processing. The file is read via the FileReader API and processed entirely in browser memory. This is verifiable by anyone with basic developer tools.</div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">How many computers can I install it on?<span class="faq-icon">+</span></div>
+        <div class="faq-a">There is nothing to install — it is a single HTML file that opens in any browser. The licence is contractual, not technical. Solo covers 1 user on any device they use. Practice covers up to 5 users. Office covers up to 10. Firm covers up to 25. You can copy the file to a shared drive, a USB, or your intranet.</div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">How long will my licence last?<span class="faq-icon">+</span></div>
+        <div class="faq-a">Your licence is permanent — the tool itself keeps working for as long as your browser opens HTML files, which is likely well beyond 5 years. We support each product version for 5 years from release with optional update cover. After 5 years we recommend moving to the current version to stay aligned with the latest ICO guidance, metadata standards, and browser security updates. Update cover (£47/year, first 6 months included) keeps you on the current version in the meantime. Like any professional software, the product works forever; staying current is optional but recommended.</div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Does it work in an air-gapped environment?<span class="faq-icon">+</span></div>
+        <div class="faq-a">Yes. Once the page has loaded, it functions entirely offline. For fully air-gapped networks, self-host the pdf-lib script alongside the HTML file — instructions are in the technical whitepaper.</div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Can we purchase by purchase order?<span class="faq-icon">+</span></div>
+        <div class="faq-a">Yes. Email info@pdfcleanse.com with your organisation name and required licence tier. We will issue a proforma invoice. A receipt is provided on payment. This avoids the need for a credit card and fits standard government and legal procurement workflows.</div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Can I read the technical detail before buying?<span class="faq-icon">+</span></div>
+        <div class="faq-a">Yes. The <a href="PDFCleanseWhitepaperv1_7.pdf" download style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent);">technical whitepaper</a> (12 pages, PDF) sets out the four-stage architecture, the audit certificate format, the security posture, deployment options, known limitations, and a competitor comparison. It is written for IT administrators, data protection officers, and procurement teams evaluating the tool for internal use. No email required to download.</div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Does this guarantee <abbr title="UK GDPR — the UK's retained General Data Protection Regulation, sitting alongside the Data Protection Act 2018">GDPR</abbr> compliance?<span class="faq-icon">+</span></div>
+        <div class="faq-a">No. PDF Cleanse is a technical utility that supports compliance workflows. It removes the metadata layers described in the whitepaper but cannot guarantee that every form of embedded data is removed from every PDF. It does not constitute legal advice. Your <abbr title="Data Protection Officer — required under UK GDPR for public authorities and many private organisations; responsible for monitoring data protection compliance">DPO</abbr> remains responsible for your organisation's compliance obligations.</div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">What happens to my files after I clean them?<span class="faq-icon">+</span></div>
+        <div class="faq-a">Nothing. The cleaned file is downloaded to your device. The original and cleaned versions exist only in browser memory during processing and are discarded when you close the tab. PDF Cleanse has no server, no database, and no storage. It is physically impossible for us to retain your files.</div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Will cleaning a PDF invalidate its digital signature?<span class="faq-icon">+</span></div>
+        <div class="faq-a">Yes, in most cases. Digital signatures in PDFs cryptographically cover the file's byte content — including metadata. Stripping metadata alters that content, which will invalidate any existing signature. If your document carries a digital signature that must remain verifiable, clean first, then re-sign the output.</div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Does PDF Cleanse remove GPS or location data?<span class="faq-icon">+</span></div>
+        <div class="faq-a">Not from embedded images. PDF Cleanse removes PDF-level structural metadata — Info dictionary, XMP packets, document IDs, and PieceInfo streams. If your PDF contains embedded images, those images may carry their own EXIF metadata including GPS coordinates. That data lives inside the image itself. If location data in embedded images is a concern, strip EXIF data from the images before embedding them.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--accent);padding:80px 40px;">
+  <div class="container" style="max-width:680px;text-align:center;">
+    <div style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:rgba(247,244,238,0.5);margin-bottom:12px;">Not ready yet?</div>
+    <h2 style="font-family:var(--serif);font-size:clamp(28px,4vw,38px);color:var(--paper);line-height:1.2;margin-bottom:16px;">We'll remind you in one week</h2>
+    <p style="font-size:15px;color:rgba(247,244,238,0.75);line-height:1.7;margin-bottom:32px;">Drop your email. We'll send you a reminder with the whitepaper, pricing, and a direct line to ask questions. No spam, no daily emails — just one follow-up in 7 days.</p>
+    
+    <form id="reminderForm" style="display:flex;gap:12px;max-width:480px;margin:0 auto;flex-wrap:wrap;">
+      <input 
+        type="email" 
+        id="reminderEmail" 
+        placeholder="your.email@company.com" 
+        required
+        style="flex:1;min-width:260px;font-family:var(--sans);font-size:14px;padding:16px 20px;border:1px solid rgba(247,244,238,0.3);border-radius:3px;background:rgba(247,244,238,0.95);color:var(--ink);"
+      >
+      <button 
+        type="submit"
+        style="font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:16px 32px;border:none;border-radius:3px;background:var(--paper);color:var(--accent);cursor:pointer;transition:all .15s;"
+      >
+        Remind me
+      </button>
+    </form>
+    
+    <div id="reminderSuccess" style="display:none;margin-top:20px;padding:16px;background:rgba(46,102,71,0.2);border:1px solid rgba(46,102,71,0.4);border-radius:3px;color:var(--paper);font-family:var(--mono);font-size:12px;">
+      ✓ Got it. We'll email you in 7 days.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">PDF Cleanse</div>
+    <div class="footer-links">
+      <a href="pdf-cleanse.html">Open tool</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#compliance">Compliance</a>
+      <a href="mailto:info@pdfcleanse.com?subject=Unsubscribe&amp;body=Please%20remove%20this%20email%20address%20from%20all%20PDF%20Cleanse%20mailings.">Unsubscribe from mailings</a>
+    </div>
+    <div class="footer-contact">
+      <div class="footer-contact-label">Contact · Sales · Support</div>
+      <a href="mailto:info@pdfcleanse.com" class="footer-contact-email">info@pdfcleanse.com</a>
+    </div>
+    <div class="footer-copy">
+      © 2026 PDF Cleanse · pdfcleanse.com<br>
+      This tool is provided as-is without warranty. It is a technical utility and does not constitute legal advice. Users remain responsible for their compliance obligations.
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script>
+document.getElementById('audit-file').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const label = document.querySelector('.audit-upload');
+  label.textContent = 'Scanning…';
+
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    try {
+      const bytes = new Uint8Array(ev.target.result);
+      const doc = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true });
+
+      const set = (id, val, isExposed) => {
+        const el = document.getElementById(id);
+        el.textContent = val || 'not set';
+        el.className = 'af-val' + (val && isExposed ? '' : ' clean');
+      };
+
+      const latin1 = Array.from(bytes, b => String.fromCharCode(b)).join('');
+      const hasXmp = latin1.includes('<?xpacket begin=');
+      const hasId = /\/ID\s*\[\s*<[0-9a-fA-F]+>/.test(latin1);
+      const hasPieceInfo = /\/PieceInfo\s*<</.test(latin1);
+
+      const author = doc.getAuthor();
+      const creator = doc.getCreator();
+      const date = doc.getCreationDate();
+
+      set('af-author', author, true);
+      set('af-creator', creator, true);
+      set('af-date', date ? (date.toISOString ? date.toISOString().split('T')[0] : String(date)) : null, true);
+      set('af-id', hasId ? 'Present — unique fingerprint found' : null, true);
+      set('af-xmp', hasXmp ? 'Present — hidden XML metadata block found' : null, true);
+      set('af-pieceinfo', hasPieceInfo ? 'Present — workflow tracking data found' : null, true);
+
+      label.textContent = '✓ Scanned: ' + file.name;
+      document.getElementById('audit-cta').style.display = 'block';
+    } catch(err) {
+      label.textContent = 'Could not read file — try another PDF';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  e.target.value = '';
+});
+
+const strip = document.querySelector('.audit-strip');
+strip.addEventListener('dragover', e => e.preventDefault());
+strip.addEventListener('drop', e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('audit-file').files = dt.files;
+    document.getElementById('audit-file').dispatchEvent(new Event('change'));
+  }
+});
+
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+function toggleFaq(el) {
+  const wasOpen = el.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if (!wasOpen) el.classList.add('open');
+}
+
+// ── Custom tooltip — visible ? marker, hover + tap + keyboard ──
+(function(){
+  const pop = document.createElement('div');
+  pop.className = 'tt-pop';
+  document.body.appendChild(pop);
+  let active = null;
+  let hideTimer = null;
+
+  function position(el){
+    const r = el.getBoundingClientRect();
+    pop.style.left = Math.min(window.innerWidth - 340, Math.max(8, r.left)) + 'px';
+    pop.style.top  = (r.bottom + 8) + 'px';
+  }
+  function show(el){
+    clearTimeout(hideTimer);
+    const txt = el.getAttribute('data-tip');
+    if (!txt) return;
+    pop.textContent = txt;
+    position(el);
+    pop.classList.add('show');
+    active = el;
+  }
+  function scheduleHide(){
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => { pop.classList.remove('show'); active = null; }, 80);
+  }
+  function hideNow(){
+    clearTimeout(hideTimer);
+    pop.classList.remove('show');
+    if (active && document.activeElement === active) {
+      active.blur();
+    }
+    active = null;
+  }
+
+  // Move title -> data-tip so native browser tooltip doesn't double up
+  document.querySelectorAll('abbr[title]').forEach(el => {
+    el.setAttribute('data-tip', el.getAttribute('title'));
+    el.removeAttribute('title');
+    el.setAttribute('tabindex','0');
+  });
+
+  // Delegated handlers — robust against moving between adjacent abbrs
+  document.addEventListener('mouseover', e => {
+    const el = e.target.closest && e.target.closest('abbr[data-tip]');
+    if (el) show(el);
+  });
+  document.addEventListener('mouseout', e => {
+    const from = e.target.closest && e.target.closest('abbr[data-tip]');
+    if (!from) return;
+    const to = e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('abbr[data-tip]');
+    if (to !== from) scheduleHide();
+  });
+  document.addEventListener('focusin', e => {
+    const el = e.target.closest && e.target.closest('abbr[data-tip]');
+    if (el) show(el);
+  });
+  document.addEventListener('focusout', e => {
+    const el = e.target.closest && e.target.closest('abbr[data-tip]');
+    if (el) scheduleHide();
+  });
+  document.addEventListener('click', e => {
+    const el = e.target.closest && e.target.closest('abbr[data-tip]');
+    if (el) { e.stopPropagation(); active === el ? hideNow() : show(el); return; }
+    if (active) hideNow();
+  });
+  window.addEventListener('scroll', hideNow, true);
+  window.addEventListener('resize', hideNow);
+})();
+
+// Email reminder form
+document.getElementById('reminderForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('reminderEmail').value;
+  const btn = e.target.querySelector('button');
+  const success = document.getElementById('reminderSuccess');
+  
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+  
+  // TODO: Replace with your email service endpoint (Mailchimp, SendGrid, etc)
+  // For now, just show success message
+  // Example: await fetch('YOUR_ENDPOINT', { method: 'POST', body: JSON.stringify({ email }) });
+  
+  setTimeout(() => {
+    e.target.style.display = 'none';
+    success.style.display = 'block';
+    
+    // Log to console for now (connect to email service later)
+    console.log('Email reminder signup:', email);
+  }, 800);
+});
+</script>
+</body>
+</html>
